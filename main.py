@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 url = f'https://api.tinybird.co/v0/datasources?'
 
 def process_name(key):
-    key = key.replace('.csv', '')
+    key = key.replace('.csv', '').split('/')[-1]
     file_regexp = os.getenv('FILE_REGEXP', None)
     if not file_regexp:
         return key
@@ -22,14 +22,9 @@ def process_name(key):
     return m.group(0) if m is not None else key
 
 def create_presigned_url(bucket_name, object_name, expiration=3600):
-    from google.cloud import storage
-    from datetime import datetime, timedelta
-
-    import google.auth
     credentials, project_id = google.auth.default()
 
     # Perform a refresh request to get the access token of the current credentials (Else, it's None)
-    from google.auth.transport import requests
     r = requests.Request()
     credentials.refresh(r)
 
@@ -57,6 +52,7 @@ def upload_to_tinybird(csv_path, name):
     headers={
         'Authorization': 'Bearer ' + os.environ['TB_TOKEN']
     }
+    print(url + urlencode(fields))
     return http.request('POST', url + urlencode(fields), headers=headers)
 
 def ingest_to_tinybird(event, context):
@@ -72,25 +68,17 @@ def ingest_to_tinybird(event, context):
     Returns:
         None; the output is written to Stackdriver Logging
     """
-
-    status = 200
-    responses = []
-
-    # for record in event['Records']:
     bucket = event['bucket']
     key = event['name']
     csv_path = create_presigned_url(bucket, key)
     name = process_name(key)
     r = upload_to_tinybird(csv_path, name=name)
-    status = r.status if r.status != 200 else status
-    responses.append({
-        'status': r.status,
+    status = r.status
+    response = {
+        'status': status,
         'name': name,
         'bucket': bucket,
-        'tb_data': json.loads(r.data.decode('utf-8'))
-    })
+        'tb_data': r.data.decode('utf-8')
+    }
 
-    print(json.dumps({
-        'status': status,
-        'responses': responses
-    }))
+    print(json.dumps(response))
