@@ -34,6 +34,6 @@ gcloud functions deploy $TB_FUNCTION_NAME \
 --service-account $SERVICE_ACCOUNT_NAME
 ```
 
-Once finished, go to the Google Cloud console and check the cloud function is there and the `TB_TOKEN` and `FILE_REGEXP` variables required to run the script are available.
+Once finished, go to the Google Cloud console and check the cloud function is there and the `TB_HOST`, `TB_TOKEN`, and `FILE_REGEXP` variables required to run the script are available.
 
 ![](output.gif)
