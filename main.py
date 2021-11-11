@@ -10,9 +10,6 @@ import logging
 import urllib3
 from urllib.parse import urlencode
 
-# Tinybird datasource url
-url = f'https://api.tinybird.co/v0/datasources?'
-
 def process_name(key):
     key = key.replace('.csv', '').split('/')[-1]
     file_regexp = os.getenv('FILE_REGEXP', None)
@@ -52,6 +49,8 @@ def upload_to_tinybird(csv_path, name):
     headers={
         'Authorization': 'Bearer ' + os.environ['TB_TOKEN']
     }
+    # Tinybird datasource url
+    url = f"{ os.getenv('TB_HOST', 'https://api.tinybird.co') }/v0/datasources?"    
     print(url + urlencode(fields))
     return http.request('POST', url + urlencode(fields), headers=headers)
 
